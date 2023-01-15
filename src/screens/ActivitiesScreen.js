@@ -23,33 +23,112 @@ function ActivitiesScreen({ route, navigation }) {
   const [loading, setLoading] = useState(false);
   const [activitySelected, setActivitySelected] = useState("");
 
- 
+  const [latitudeState, setLatitudeState] = useState(null);
+  const [longitudeState, setLongitudeState] = useState(null);
 
+  const getLat = async () => {
+    try {
+      const savedLat = await AsyncStorage.getItem("latitude");
+      setLatitudeState(savedLat);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getLong = async () => {
+    try {
+      const savedLong = await AsyncStorage.getItem("longitude");
+      setLongitudeState(savedLong);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getLat();
+    getLong();
+  }, []);
+
+  const calculDistance = (lat1, lat2, long1, long2) => {
+    var radlat1 = (Math.PI * lat1) / 180;
+    var radlat2 = (Math.PI * lat2) / 180;
+    var theta = long1 - long2;
+    var radtheta = (Math.PI * theta) / 180;
+    var dist =
+      Math.sin(radlat1) * Math.sin(radlat2) +
+      Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    if (dist > 1) {
+      dist = 1;
+    }
+    dist = Math.acos(dist);
+    dist = (dist * 180) / Math.PI;
+    dist = dist * 60 * 1.1515;
+    dist = dist * 1.609344;
+    return Math.trunc(dist);
+  };
+
+/*
   if (route.params){
     // ajouter filtre
   const sliderValue = route.params.name;
   console.log(sliderValue);
   }
+*/
   
   const renderAct = ({ item }) => <ActivityItem item={item} navigation={navigation} />;
 
   const getActivities = async () => {
+
+    if (route.params){
+      
+      const sliderValue = route.params.name;
+      console.log(sliderValue);
+      const activites = await supabase.from("Activity").select().order(orderActivity);
+      activites.body.forEach((element) => {
+      const distance = calculDistance(latitudeState, element.localisation.lat, longitudeState, element.localisation.long);
+      element.distance = distance;
+      const filtre = activites.body.filter(activites => activites.distance < sliderValue);
+      console.log(filtre);
+
+      try {
+        setLoading(true);
+        setActivities(filtre);
+        setLoading(false);
+        } catch (error) {
+          console.error(error);
+          setLoading(false);
+      }
+
+    });
+
+          //.lte(???, sliderValue);
+        
+     
+
+    }
+
+    else {
+
     try {
       setLoading(true);
+        //.lte(???, sliderValue);
       const { data, error } = await supabase
         .from("Activity")
         .select()
-        .order(orderActivity);
-      //console.log(data);
+        .order(orderActivity)
       if (data) {
         setActivities(data);
       }
       setLoading(false);
-    } catch (error) {
-      console.error(error);
-      setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
     }
-  };
+
+  }
+
+    
+   };
 
  
 

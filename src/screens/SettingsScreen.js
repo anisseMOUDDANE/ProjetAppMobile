@@ -5,6 +5,15 @@ import Header from '../components/Header'
 import Slider from '@react-native-community/slider';
 import * as Location from "expo-location";
 
+
+import { useColorScheme } from 'react-native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
+
+
 const SettingsScreen = ({ navigation }) => {
 
   const [range, setRange] = useState(null);
